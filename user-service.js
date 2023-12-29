@@ -47,16 +47,24 @@ module.exports.connect = function () {
 
 module.exports.registerUser = function (userData) {
     return new Promise(function (resolve, reject) {
-
         // Check if passwords match
         if (userData.password !== userData.password2) {
             reject("Passwords do not match");
             return;
         }
-        // Check if email is already registered
-        User.findOne({ email: userData.email })
+
+        // Check if username is already registered
+        User.findOne({ userName: userData.userName })
             .then(existingUser => {
                 if (existingUser) {
+                    reject("Username already taken");
+                    return;
+                }
+                // Check if email is already registered
+                return User.findOne({ email: userData.email });
+            })
+            .then(existingEmailUser => {
+                if (existingEmailUser) {
                     reject("Email already registered");
                     return;
                 }
@@ -80,7 +88,7 @@ module.exports.registerUser = function (userData) {
             })
             .catch(err => {
                 if (err.code === 11000) {
-                    reject("User Name already taken");
+                    reject("User Name or Email already taken");
                 } else {
                     console.error(err);
                     reject("There was an error creating the user: " + err);
@@ -88,7 +96,6 @@ module.exports.registerUser = function (userData) {
             });
     });
 };
-
 
 module.exports.checkUser = function (userData) {
     return new Promise(function (resolve, reject) {
